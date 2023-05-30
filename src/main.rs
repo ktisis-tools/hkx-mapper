@@ -1,6 +1,5 @@
 // Dependencies
 
-mod path;
 mod reader;
 mod scanner;
 

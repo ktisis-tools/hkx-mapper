@@ -1,17 +1,16 @@
 // Dependencies
 
 use crate::{
-	path::GameDirectory,
 	scanner::SectionScanner,
 	reader::{ExeReader, ExeHeader}
 };
+use super::path::GameDirectory;
 
 use simple_error::SimpleError;
 
 // Scanner
 
 pub struct ExeScanner {
-	game_dir: GameDirectory,
 	reader: ExeReader
 }
 
@@ -20,7 +19,7 @@ impl ExeScanner {
 		let game_dir = GameDirectory::at(path_str)?;
 		let exe_path = game_dir.get_exe_path();
 		let reader = ExeReader::open(exe_path.as_path())?;
-		Ok(ExeScanner { game_dir, reader })
+		Ok(ExeScanner { reader })
 	}
 
 	pub fn get_header(&self) -> &ExeHeader { &self.reader.header }

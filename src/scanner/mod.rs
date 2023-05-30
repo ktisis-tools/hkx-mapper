@@ -1,6 +1,6 @@
+mod path;
 mod scanner;
 mod section;
-mod file;
 
 pub use {
 	scanner::ExeScanner,
