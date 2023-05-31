@@ -60,7 +60,7 @@ impl SectionScanner {
 					let ptr_call = *(cursor.add(1) as *const u32);
 					let ptr_needle = func_ptr.offset_from(cursor.add(5)) as u32;
 					if ptr_call == ptr_needle {
-						let pointer = Pointer::new(cursor as usize, &self.header);
+						let pointer = Pointer::new(cursor.offset_from(data_ptr) as usize, &self.header);
 						results.push(pointer);
 					}
 					advance += 4;

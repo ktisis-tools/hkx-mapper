@@ -31,6 +31,8 @@ fn main() {
 }
 
 fn scan(path_str: &str) -> Result<(), SimpleError> {
+	let start = std::time::Instant::now();
+
 	let scanner = ExeScanner::new(path_str)?;
 
 	let header = scanner.get_header().clone();
@@ -53,7 +55,8 @@ fn scan(path_str: &str) -> Result<(), SimpleError> {
 		return Err(SimpleError::new("Failed to find signature."));
 	}
 
-	//code.clear();
+	let elapsed = start.elapsed();
+	println!("Elapsed: {:?}", elapsed);
 
 	Ok(())
 }
