@@ -45,8 +45,31 @@ impl SectionScanner {
 		Some(pointer)
 	}
 
-	pub fn clear(&mut self) {
-		self.data.clear();
+	pub fn find_func_xrefs(&self, func: Pointer) -> Vec<Pointer> {
+		let mut results = Vec::<Pointer>::new();
+
+		let data_ptr = self.data.as_ptr();
+		let data_end = unsafe { data_ptr.add(self.header.raw_data_size as usize) };
+
+		let mut cursor = data_ptr;
+		unsafe {
+			let func_ptr = data_ptr.add(func.raw_value());
+			while cursor < data_end {
+				let mut advance = 1;
+				if *cursor == 0xE8 {
+					let ptr_call = *(cursor.add(1) as *const u32);
+					let ptr_needle = func_ptr.offset_from(cursor.add(5)) as u32;
+					if ptr_call == ptr_needle {
+						let pointer = Pointer::new(cursor as usize, &self.header);
+						results.push(pointer);
+					}
+					advance += 4;
+				}
+				cursor = cursor.add(advance);
+			}
+		}
+
+		return results;
 	}
 }
 

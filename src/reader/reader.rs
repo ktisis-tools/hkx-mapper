@@ -45,13 +45,6 @@ impl Reader {
 		self.seek(SeekFrom::Start(n))
 	}
 
-	pub fn skip(&mut self, n: i64) -> SimpleResult<u64> {
-		match self.file.seek(SeekFrom::Current(n)) {
-			Ok(val) => Ok(val),
-			Err(err) => Err(SimpleError::from(err))
-		}
-	}
-
 	pub fn read<T>(&mut self) -> T {
 		// this *should* check the buffer size but I like speedy code <3
 		let size = size_of::<T>();

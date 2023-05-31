@@ -35,22 +35,25 @@ fn scan(path_str: &str) -> Result<(), SimpleError> {
 
 	let header = scanner.get_header().clone();
 
-	let mut code = scanner.section(".text")?;
+	let code = scanner.section(".text")?;
 	if let Some(ptr) = code.find_signature(SIG_HKCLASS) {
 		println!("hkClass signature found\n\
 			- File offset: {:X}\n\
 			- Virtual offset: {:X}",
 			ptr.file_offset(),
 			ptr.virtual_offset() + header.image_base as usize
-		)
+		);
 
-		// TODO: xref scanning
+		// TODO: xref scanning, read args for class information
+
+		let xrefs = code.find_func_xrefs(ptr);
+		println!("Found {} xref(s)", xrefs.len());
 
 	} else {
 		return Err(SimpleError::new("Failed to find signature."));
 	}
 
-	code.clear();
+	//code.clear();
 
 	Ok(())
 }
