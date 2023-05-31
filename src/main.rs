@@ -38,7 +38,8 @@ fn scan(path_str: &str) -> Result<(), SimpleError> {
 	let header = scanner.get_header().clone();
 
 	let code = scanner.section(".text")?;
-	if let Some(ptr) = code.find_signature(SIG_HKCLASS) {
+	if let Some(func) = code.find_func_signature(SIG_HKCLASS) {
+		let ptr = &func.pointer;
 		println!("hkClass signature found\n\
 			- File offset: {:X}\n\
 			- Virtual offset: {:X}",
@@ -48,7 +49,7 @@ fn scan(path_str: &str) -> Result<(), SimpleError> {
 
 		// TODO: xref scanning, read args for class information
 
-		let xrefs = code.find_func_xrefs(ptr);
+		let xrefs = code.find_func_xrefs(&func);
 		println!("Found {} xref(s)", xrefs.len());
 
 	} else {

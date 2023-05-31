@@ -1,6 +1,8 @@
 // Dependencies
 
 use crate::reader::{ExeReader, SectionHeader};
+use super::asm::{Pointer, Function};
+
 use sigscanner::{
 	signatures::parse_sig_str,
 	scanning::find_sig
@@ -45,7 +47,12 @@ impl SectionScanner {
 		Some(pointer)
 	}
 
-	pub fn find_func_xrefs(&self, func: Pointer) -> Vec<Pointer> {
+	pub fn find_func_signature(&self, sig_str: &str) -> Option<Function> {
+		let pointer = self.find_signature(sig_str)?;
+		Some(Function::new(pointer))
+	}
+
+	pub fn find_func_xrefs(&self, func: &Function) -> Vec<Pointer> {
 		let mut results = Vec::<Pointer>::new();
 
 		let data_ptr = self.data.as_ptr();
@@ -53,7 +60,7 @@ impl SectionScanner {
 
 		let mut cursor = data_ptr;
 		unsafe {
-			let func_ptr = data_ptr.add(func.raw_value());
+			let func_ptr = data_ptr.add(func.pointer.raw_value());
 			while cursor < data_end {
 				let mut advance = 1;
 				if *cursor == 0xE8 {
@@ -71,25 +78,4 @@ impl SectionScanner {
 
 		return results;
 	}
-}
-
-// Pointer
-
-#[derive(Debug)]
-pub struct Pointer {
-	value: usize,
-	raw_offset: u32,
-	virtual_offset: u32
-}
-
-impl Pointer {
-	pub fn new(value: usize, header: &SectionHeader) -> Self { Pointer {
-		value,
-		raw_offset: header.raw_data_ptr,
-		virtual_offset: header.virtual_addr
-	} }
-
-	pub fn raw_value(&self) -> usize { self.value }
-	pub fn file_offset(&self) -> usize { self.value + self.raw_offset as usize }
-	pub fn virtual_offset(&self) -> usize { self.value + self.virtual_offset as usize }
 }
