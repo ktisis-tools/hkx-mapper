@@ -7,3 +7,4 @@ edition = "2021"
 clap = "4.3.0"
 simple-error = "0.3.0"
 sigscanner = { version = "0.2.0", path = "modules/sigscanner" }
+iced-x86 = "1.18.0"

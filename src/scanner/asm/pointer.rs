@@ -4,7 +4,7 @@ use crate::reader::SectionHeader;
 
 // Pointer
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Pointer {
 	value: usize,
 	raw_offset: u32,
