@@ -25,25 +25,22 @@ impl Call {
 		Call { pointer, calling_func, call_pos }
 	}
 
-	pub fn get_arg_values(&self) -> ArgValues {
-		let mut state = ArgValues::new();
+	pub fn get_call_values(&self) -> CallValues {
+		let mut state = CallValues::new();
 
 		let bytes = &self.calling_func.bytes[0..self.call_pos as usize];
 		let mut decoder = Decoder::new(64, bytes, DecoderOptions::NONE);
 
 		/*
 			We make 2 assumptions here:
-			1. All immediate variables are declared locally (ie. not passed into the calling function).
-			2. MOV and LEA are the only instructions used to push parameters onto the stack
+			1. MOV and LEA are the only instructions used to set parameters
+			2. All immediate values are declared locally (ie. not passed into the calling function).
 			This will probably break down if used for anything other than hkClass constructors.
 		*/
 
 		for op in decoder.iter() {
 			match op.mnemonic() {
-				Mnemonic::Mov => {
-					state.set_val_op(&op);
-				},
-				Mnemonic::Lea => {
+				Mnemonic::Mov | Mnemonic::Lea => {
 					state.set_val_op(&op);
 				},
 				Mnemonic::Xor => {
@@ -62,16 +59,34 @@ impl Call {
 	}
 }
 
-// CallStack
-// TODO: Resolve registers to function parameters
+// CallValues
 
 #[derive(Default)]
-pub struct ArgValues {
+pub struct CallValues {
 	pub values: HashMap<OpDst, OpVal>
 }
 
-impl ArgValues {
-	pub fn new() -> Self { ArgValues { ..Default::default() } }
+impl CallValues {
+	pub fn new() -> Self { CallValues { ..Default::default() } }
+
+	pub fn get_args(&self, ct: usize) -> Vec<OpVal> {
+		let mut args: Vec<OpVal> = vec![OpVal::Immediate(0); ct];
+		let max = ct as u64 * 8;
+		for (dst, val) in &self.values {
+			let i = match dst {
+				OpDst::Reg(Register::RCX) => 0,
+				OpDst::Reg(Register::RDX) => 1,
+				OpDst::Reg(Register::R8) => 2,
+				OpDst::Reg(Register::R9D) => 3,
+				OpDst::Stack(pos) if *pos > 24 && *pos < max => {
+					*pos as usize / 8
+				},
+				_ => continue
+			};
+			args[i] = *val;
+		}
+		args
+	}
 
 	pub fn set_val_op(&mut self, op: &Instruction) {
 		let dst = match op.op0_kind() {
@@ -93,8 +108,7 @@ impl ArgValues {
 				}
 			},
 			OpKind::Register => { // MOV
-				let reg = op.op1_register();
-				*self.get_val_reg(reg).unwrap_or(&OpVal::Immediate(0))
+				*self.get_val_reg(op.op1_register()).unwrap_or(&OpVal::Immediate(0))
 			},
 			_ => OpVal::Unknown
 		};
@@ -108,7 +122,7 @@ impl ArgValues {
 	}
 }
 
-// RegVal
+// OpDst & OpVal
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub enum OpDst {
